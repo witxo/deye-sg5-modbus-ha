@@ -26,8 +26,11 @@ def test_map_controls_stay_in_settings_block():
     assert m["writes_supported"] is True
     addrs = {int(c["address"]) for c in m["controls"]}
     assert addrs <= set(range(210, 280))
-    # GEN port (micro-inverter input) and battery-type registers are never writable
-    assert not addrs & {200, 213, 235, 236, 237, 238, 239}
+    # battery type / voltages and device registers are never writable
+    assert not addrs & {200, 201, 202, 203, 204, 205, 213}
+    # GEN port mode is writable but its entity is disabled by default
+    gen_mode = next(c for c in m["controls"] if c["unique_id"] == "gen_port_mode")
+    assert gen_mode["enabled_default"] is False
 
 
 def test_three_phase_map_has_no_verified_writes():
@@ -153,6 +156,17 @@ async def test_entities_read_and_write(hass: HomeAssistant, inverter):
     await hass.services.async_call("time", "set_value", {
         "entity_id": _eid(hass, entry, "time", "tou2_time"), "time": "04:30:00"}, blocking=True)
     assert inverter.reg(251) == 430
+
+    # GEN voltages are stored in 0.01 V
+    gen_v = _eid(hass, entry, "number", "gen_charge_start_voltage")
+    assert hass.states.get(gen_v).state == "49.0"
+    await hass.services.async_call("number", "set_value", {"entity_id": gen_v, "value": 48.5}, blocking=True)
+    assert inverter.reg(225) == 4850
+    assert hass.states.get(_eid(hass, entry, "number", "gen_off_soc")).state == "100.0"
+
+    # GEN port mode has no entity unless the user enables it
+    reg_entry = er.async_get(hass).async_get(_eid(hass, entry, "select", "gen_port_mode"))
+    assert reg_entry.disabled_by is not None
 
     # out-of-order TOU times and SOC thresholds are refused before any write
     n = len(inverter.writes)
