@@ -1,6 +1,6 @@
 {
   "domain": "deye_modbus",
-  "name": "Deye Modbus (Hybrid Inverter) local interface",
+  "name": "Deye SG05 Modbus (Hybrid Inverter) local interface",
   "codeowners": [
     "@keeepcool",
     "@witxo"
@@ -17,5 +17,5 @@
   "requirements": [
     "pymodbus>=3.5.0"
   ],
-  "version": "0.2.0"
+  "version": "0.2.1"
 }

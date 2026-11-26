@@ -1,4 +1,4 @@
-# Deye Modbus for Home Assistant
+# Deye SG05 Modbus for Home Assistant
 
 A fork of https://github.com/keeepcool/deye-modbus-ha (itself a fork of https://github.com/Developer089/deye-modbus-ha) that adds **optional, guarded write support** for the single-phase SG05LP1 hybrid inverters.
 
@@ -39,15 +39,15 @@ Communication is performed locally over Modbus TCP, either through the inverter'
 1. In Home Assistant go to **HACS**.
 2. Open the top-right menu **⋮ → Custom repositories**.
 3. Add the repository URL `https://github.com/witxo/deye-sg5-modbus-ha` and choose category **Integration**.
-4. Find **Deye Modbus (Hybrid Inverter)** in the list and click **Download / Install**.
+4. Find **Deye SG05 Modbus (Hybrid Inverter)** in the list and click **Download / Install**.
 5. **Restart Home Assistant.**
-6. Go to **Settings ▸ Devices & Services ▸ Add Integration** and search for **Deye Modbus**.
+6. Go to **Settings ▸ Devices & Services ▸ Add Integration** and search for **Deye SG05 Modbus**.
 
 ### Manual installation
 
 1. Copy the folder `custom_components/deye_modbus` from this repository into your Home Assistant `/config/custom_components/` directory, so you end up with `/config/custom_components/deye_modbus/`.
 2. **Restart Home Assistant.**
-3. Add the integration via **Settings ▸ Devices & Services ▸ Add Integration → "Deye Modbus local interface"**.
+3. Add the integration via **Settings ▸ Devices & Services ▸ Add Integration → "Deye SG05 Modbus local interface"**.
 
 ---
 
