@@ -20,6 +20,7 @@ from .const import (
     CONF_BAUDRATE, DEFAULT_BAUDRATE, CONF_BYTESIZE, DEFAULT_BYTESIZE,
     CONF_PARITY, DEFAULT_PARITY, CONF_STOPBITS, DEFAULT_STOPBITS,
     CONF_ADDR_OFFSET, DEFAULT_ADDR_OFFSET, MIN_SCAN_SECONDS, MAX_SCAN_SECONDS,
+    CONF_ALLOW_WRITES, DEFAULT_ALLOW_WRITES,
 )
 from .models import model_options, get_model, DEFAULT_MODEL
 
@@ -106,6 +107,7 @@ class DeyeModbusOptionsFlow(config_entries.OptionsFlow):
             vol.Optional(CONF_BYTESIZE, default=self._entry_int_default(CONF_BYTESIZE, DEFAULT_BYTESIZE)): vol.Coerce(int),
             vol.Optional(CONF_PARITY, default=parity): vol.In(["N", "E", "O"]),
             vol.Optional(CONF_STOPBITS, default=self._entry_int_default(CONF_STOPBITS, DEFAULT_STOPBITS)): vol.Coerce(int),
+            vol.Optional(CONF_ALLOW_WRITES, default=bool(self._entry_default(CONF_ALLOW_WRITES, DEFAULT_ALLOW_WRITES))): bool,
         })
 
     async def async_step_init(self, user_input=None):

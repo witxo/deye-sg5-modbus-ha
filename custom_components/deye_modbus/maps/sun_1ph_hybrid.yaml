@@ -14,6 +14,9 @@
 #   * temperatures            -> offset 1000, scale 0.1  =>  (raw-1000)*0.1 = °C
 #   * signed: true            -> value is two's-complement (marked "S16" in doc)
 # =====================================================================
+# Writable controls below were verified on real hardware for this map.
+writes_supported: true
+
 sensors:
   # Status
   - name: Run State
@@ -333,3 +336,364 @@ sensors:
     unit_of_measurement: kWh
     device_class: energy
     state_class: total_increasing
+
+
+# =====================================================================
+# Writable controls (settings block 200-280).
+# Only loaded when "Allow changing inverter settings" is enabled in the
+# integration options. Each control gets a hidden read-back sensor (polled
+# every 4th cycle) and every write is range-checked, rate-limited and verified.
+#
+# Addresses verified on a SUN-6K-SG05LP1-EU-AM2-P (2026-11-25) by reading the
+# block and matching it against the inverter's own settings
+# (e.g. 204 = 314 Ah, 235 = 2 micro-inverter on GEN, 244 = 2 zero export to CT).
+#
+# Deliberately NOT exposed: GEN port mode (235) and its settings, battery type
+# and voltages, grid/country parameters, inverter on/off.
+# =====================================================================
+controls:
+
+  # ------------------------------------------------------------- battery
+  - type: number
+    name: Battery Max Charge Current
+    unique_id: batt_max_charge_current
+    address: 210
+    min: 0
+    max: 135
+    step: 1
+    unit_of_measurement: A
+    icon: mdi:battery-arrow-up
+
+  - type: number
+    name: Battery Max Discharge Current
+    unique_id: batt_max_discharge_current
+    address: 211
+    min: 0
+    max: 135
+    step: 1
+    unit_of_measurement: A
+    icon: mdi:battery-arrow-down
+
+  - type: number
+    name: Battery Shutdown SOC
+    unique_id: batt_shutdown_soc
+    address: 217
+    min: 5
+    max: 50
+    unit_of_measurement: '%'
+    icon: mdi:battery-off-outline
+    less_than: batt_low_soc
+
+  - type: number
+    name: Battery Restart SOC
+    unique_id: batt_restart_soc
+    address: 218
+    min: 10
+    max: 80
+    unit_of_measurement: '%'
+    icon: mdi:battery-sync-outline
+    greater_than: batt_low_soc
+
+  - type: number
+    name: Battery Low SOC
+    unique_id: batt_low_soc
+    address: 219
+    min: 5
+    max: 60
+    unit_of_measurement: '%'
+    icon: mdi:battery-alert-variant-outline
+    greater_than: batt_shutdown_soc
+    less_than: batt_restart_soc
+
+  # ------------------------------------------------------------- grid charge
+  - type: switch
+    name: Grid Charge
+    unique_id: grid_charge_enable
+    address: 232
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import
+
+  - type: number
+    name: Grid Charge Current
+    unique_id: grid_charge_current
+    address: 230
+    min: 0
+    max: 135
+    step: 1
+    unit_of_measurement: A
+    icon: mdi:current-dc
+
+  # ------------------------------------------------------------- work mode
+  - type: select
+    name: Energy Pattern
+    unique_id: energy_pattern
+    address: 243
+    icon: mdi:priority-high
+    options:
+      - label: Battery First
+        value: 0
+      - label: Load First
+        value: 1
+
+  - type: select
+    name: Work Mode
+    unique_id: work_mode
+    address: 244
+    icon: mdi:home-lightning-bolt
+    options:
+      - label: Selling First
+        value: 0
+      - label: Zero Export To Load
+        value: 1
+      - label: Zero Export To CT
+        value: 2
+
+  - type: number
+    name: Max Sell Power
+    unique_id: max_sell_power
+    address: 245
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:transmission-tower-export
+
+  - type: switch
+    name: Solar Sell
+    unique_id: solar_sell
+    address: 247
+    on_value: 1
+    off_value: 0
+    icon: mdi:solar-power
+
+  # ------------------------------------------------------------- time of use
+  # 248 bit 0 = time-of-use enabled; bits 1-7 = weekdays (left untouched).
+  - type: switch
+    name: Time Of Use
+    unique_id: tou_enable
+    address: 248
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:clock-outline
+
+  - type: time
+    name: TOU 1 Start
+    unique_id: tou1_time
+    address: 250
+    icon: mdi:clock-start
+    less_than: tou2_time
+
+  - type: time
+    name: TOU 2 Start
+    unique_id: tou2_time
+    address: 251
+    icon: mdi:clock-start
+    greater_than: tou1_time
+    less_than: tou3_time
+
+  - type: time
+    name: TOU 3 Start
+    unique_id: tou3_time
+    address: 252
+    icon: mdi:clock-start
+    greater_than: tou2_time
+    less_than: tou4_time
+
+  - type: time
+    name: TOU 4 Start
+    unique_id: tou4_time
+    address: 253
+    icon: mdi:clock-start
+    greater_than: tou3_time
+    less_than: tou5_time
+
+  - type: time
+    name: TOU 5 Start
+    unique_id: tou5_time
+    address: 254
+    icon: mdi:clock-start
+    greater_than: tou4_time
+    less_than: tou6_time
+
+  - type: time
+    name: TOU 6 Start
+    unique_id: tou6_time
+    address: 255
+    icon: mdi:clock-start
+    greater_than: tou5_time
+
+  - type: number
+    name: TOU 1 Power
+    unique_id: tou1_power
+    address: 256
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:flash
+
+  - type: number
+    name: TOU 2 Power
+    unique_id: tou2_power
+    address: 257
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:flash
+
+  - type: number
+    name: TOU 3 Power
+    unique_id: tou3_power
+    address: 258
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:flash
+
+  - type: number
+    name: TOU 4 Power
+    unique_id: tou4_power
+    address: 259
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:flash
+
+  - type: number
+    name: TOU 5 Power
+    unique_id: tou5_power
+    address: 260
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:flash
+
+  - type: number
+    name: TOU 6 Power
+    unique_id: tou6_power
+    address: 261
+    min: 0
+    max: 6000
+    step: 100
+    unit_of_measurement: W
+    icon: mdi:flash
+
+  - type: number
+    name: TOU 1 SOC
+    unique_id: tou1_soc
+    address: 268
+    min: 5
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-clock
+
+  - type: number
+    name: TOU 2 SOC
+    unique_id: tou2_soc
+    address: 269
+    min: 5
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-clock
+
+  - type: number
+    name: TOU 3 SOC
+    unique_id: tou3_soc
+    address: 270
+    min: 5
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-clock
+
+  - type: number
+    name: TOU 4 SOC
+    unique_id: tou4_soc
+    address: 271
+    min: 5
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-clock
+
+  - type: number
+    name: TOU 5 SOC
+    unique_id: tou5_soc
+    address: 272
+    min: 5
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-clock
+
+  - type: number
+    name: TOU 6 SOC
+    unique_id: tou6_soc
+    address: 273
+    min: 5
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-clock
+
+  # bit 0 = charge battery from grid during this slot; other bits untouched.
+  - type: switch
+    name: TOU 1 Grid Charge
+    unique_id: tou1_grid_charge
+    address: 274
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import
+
+  # bit 0 = charge battery from grid during this slot; other bits untouched.
+  - type: switch
+    name: TOU 2 Grid Charge
+    unique_id: tou2_grid_charge
+    address: 275
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import
+
+  # bit 0 = charge battery from grid during this slot; other bits untouched.
+  - type: switch
+    name: TOU 3 Grid Charge
+    unique_id: tou3_grid_charge
+    address: 276
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import
+
+  # bit 0 = charge battery from grid during this slot; other bits untouched.
+  - type: switch
+    name: TOU 4 Grid Charge
+    unique_id: tou4_grid_charge
+    address: 277
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import
+
+  # bit 0 = charge battery from grid during this slot; other bits untouched.
+  - type: switch
+    name: TOU 5 Grid Charge
+    unique_id: tou5_grid_charge
+    address: 278
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import
+
+  # bit 0 = charge battery from grid during this slot; other bits untouched.
+  - type: switch
+    name: TOU 6 Grid Charge
+    unique_id: tou6_grid_charge
+    address: 279
+    mask: 0x0001
+    on_value: 1
+    off_value: 0
+    icon: mdi:transmission-tower-import

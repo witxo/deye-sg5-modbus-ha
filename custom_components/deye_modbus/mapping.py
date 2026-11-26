@@ -33,7 +33,8 @@ def load_register_mapping(model_key: str | None) -> dict[str, Any]:
             "Deye map loaded from %s: %s sensors, %s controls",
             path, len(sensors), len(controls),
         )
-        return {"sensors": sensors, "controls": controls, "path": path}
+        return {"sensors": sensors, "controls": controls, "path": path,
+                "writes_supported": bool(data.get("writes_supported", False))}
     except Exception as err:  # noqa: BLE001 - never break setup on a bad map
         _LOGGER.error("Failed to read Deye map from %s: %s", path, err)
-        return {"sensors": [], "controls": [], "path": path}
+        return {"sensors": [], "controls": [], "path": path, "writes_supported": False}

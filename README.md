@@ -1,12 +1,10 @@
 # Deye Modbus for Home Assistant
 
-An unofficial fork of https://github.com/Developer089/deye-modbus-ha.
+A fork of https://github.com/keeepcool/deye-modbus-ha (itself a fork of https://github.com/Developer089/deye-modbus-ha) that adds **optional, guarded write support** for the single-phase SG05LP1 hybrid inverters.
 
-It retains the original project credits and licence while introducing support for additional inverter models and modifications focused on reliable, **read-only monitoring**.
+It retains the original project credits and licence. It is not affiliated with or endorsed by the original authors or Deye.
 
-This is an unofficial fork and is not affiliated with or endorsed by the original author or Deye.
-
-This fork is **read only**. It does **not** send write commands to the inverter.
+Out of the box it behaves exactly like upstream: **read only**. Writes only become possible after you enable *Allow changing inverter settings* in the integration options — see [Changing inverter settings](#changing-inverter-settings).
 
 Local Home Assistant integration for:
  - **Deye single-phase hybrid inverters** - SG05LP1 family, tested on SUN-6K-SG05LP1-AM2-EU.
@@ -29,7 +27,7 @@ Communication is performed locally over Modbus TCP, either through the inverter'
 - Rich set of **sensors**: PV strings, battery, grid import/export, per-phase grid/inverter/load, temperatures, plus daily and lifetime energy counters (ready for the HA Energy dashboard).
 - Driven by a human-readable **YAML register map** — adding a model is just a new map file, no code changes.
 - **Options flow** to tune scan interval, transport, address offset and serial parameters at any time.
-- **Read-only operation**: control entities and write services are disabled, and write methods are blocked.
+- **Read-only by default**: optional, guarded control entities (battery limits, grid charge, work mode, time of use) for the single-phase SG05LP1.
 - `pymodbus` is pulled in automatically by Home Assistant via the manifest.
 
 ---
@@ -40,7 +38,7 @@ Communication is performed locally over Modbus TCP, either through the inverter'
 
 1. In Home Assistant go to **HACS**.
 2. Open the top-right menu **⋮ → Custom repositories**.
-3. Add the repository URL `https://github.com/keeepcool/deye-modbus-ha` and choose category **Integration**.
+3. Add the repository URL `https://github.com/witxo/deye-sg5-modbus-ha` and choose category **Integration**.
 4. Find **Deye Modbus (Hybrid Inverter)** in the list and click **Download / Install**.
 5. **Restart Home Assistant.**
 6. Go to **Settings ▸ Devices & Services ▸ Add Integration** and search for **Deye Modbus**.
@@ -129,6 +127,54 @@ Open the integration and click **Configure** to change (no restart needed — th
 - **Transport** — `tcp` (standard Modbus TCP) or `rtutcp` (RTU frame over a raw TCP socket, for some gateways).
 - **Address offset** — added to every register address, for gateways that shift the map.
 - **Serial parameters** — baud rate, byte size, parity (N/E/O), stop bits (only relevant for `rtutcp`).
+- **Allow changing inverter settings** — off by default. See below.
+
+---
+
+## Changing inverter settings
+
+Only the single-phase map (`sun_1ph_hybrid.yaml`, `writes_supported: true`) has verified writable registers. The three-phase map keeps its control definitions but they are not loaded.
+
+When enabled, these entities appear (entity category *Configuration*):
+
+| Entity | Type | Register | Range |
+|---|---|---|---|
+| Battery Max Charge / Discharge Current | number | 210 / 211 | 0–135 A |
+| Battery Shutdown / Restart / Low SOC | number | 217 / 218 / 219 | must keep shutdown < low < restart |
+| Grid Charge | switch | 232 | on / off |
+| Grid Charge Current | number | 230 | 0–135 A |
+| Energy Pattern | select | 243 | Battery First / Load First |
+| Work Mode | select | 244 | Selling First / Zero Export To Load / Zero Export To CT |
+| Max Sell Power | number | 245 | 0–6000 W |
+| Solar Sell | switch | 247 | on / off |
+| Time Of Use | switch | 248 bit 0 | weekday bits untouched |
+| TOU 1–6 Start | time | 250–255 | HHMM, must stay in ascending order |
+| TOU 1–6 Power | number | 256–261 | 0–6000 W |
+| TOU 1–6 SOC | number | 268–273 | 5–100 % |
+| TOU 1–6 Grid Charge | switch | 274–279 bit 0 | other bits untouched |
+
+Deliberately **not** exposed: GEN port mode and settings (235–239, e.g. an AC-coupled inverter on the GEN input), battery type and voltages, grid/country parameters and inverter on/off.
+
+Safety checks, all enforced in the coordinator so no entity or automation can skip them:
+
+1. writes must be enabled in the options, and the map must declare `writes_supported`;
+2. the register must be a control in the map and the value inside its range;
+3. at most one write per register every 30 s (protects the inverter's settings flash — do not drive these from fast automations);
+4. a write is skipped when the register already holds the value;
+5. bit fields are read-modify-write; other bits are preserved;
+6. after writing, the register is read back; a mismatch raises an error and the entity shows the real value;
+7. every change is logged as a warning: `Deye register 211 changed 135 -> 100`.
+
+Writes use FC16 (write multiple registers) even for a single register, because Deye inverters reject FC06. Settings registers are re-read every 4th poll (and right after a write) to keep the Modbus load low.
+
+### Tests
+
+```bash
+pip install -r requirements_test.txt
+pytest
+```
+
+The tests run a real Modbus TCP server holding a register image captured from a SUN-6K-SG05LP1, and exercise the safety checks and every entity type end to end.
 
 - Perfomance can be tuned 
 
@@ -185,7 +231,7 @@ If your gateway handles larger requests reliably, you can experiment with increa
 
 This is an unofficial community-maintained fork.
 
-The integration is intended exclusively for monitoring. Control entities and write services from the original project are disabled, and the write methods are blocked.
+Changing inverter settings is at your own risk. Write a note of your current settings before you enable writes, and change one setting at a time while watching the inverter's display or app.
 
 Always verify the register map and measurements against your inverter before relying on them for automation or other purposes.
 
@@ -193,7 +239,7 @@ Always verify the register map and measurements against your inverter before rel
 
 ## Credits
 
-- Original project architecture and implementation: Developer089/deye-modbus-ha.
+- Original project architecture and implementation: Developer089/deye-modbus-ha; single-phase support and read-only hardening: keeepcool/deye-modbus-ha.
 - Architecture modeled on a **Growatt Modbus** Home Assistant integration (coordinator + YAML-driven register map pattern).
 - Register map for the three phase models derived from **Deye's official Modbus protocol documentation** for the three-phase energy-storage (hybrid) inverters.
 - Register map for the models derived and validated from https://github.com/tema-mazy/deye-modbus-test and https://github.com/VMrenato/homeassistant-deye-tcan485-esphome.

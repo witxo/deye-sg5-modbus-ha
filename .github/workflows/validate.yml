@@ -34,3 +34,21 @@ jobs:
           # This repo is installed as a HACS *custom repository*, so it is
           # ignored here. Remove this line before submitting to the store.
           ignore: brands
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install test requirements
+        run: pip install -r requirements_test.txt
+
+      - name: Run tests
+        run: pytest -q -p no:logging

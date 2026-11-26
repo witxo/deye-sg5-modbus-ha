@@ -29,8 +29,10 @@
           "baudrate": "Baud rate (RTU over TCP)",
           "bytesize": "Byte size (RTU over TCP)",
           "parity": "Parity (RTU over TCP)",
-          "stopbits": "Stop bits (RTU over TCP)"
-        }
+          "stopbits": "Stop bits (RTU over TCP)",
+          "allow_writes": "Allow changing inverter settings (writes)"
+        },
+        "description": "Writes are off by default. When enabled, battery, grid-charge, work-mode and time-of-use settings become editable. Every change is range-checked, rate-limited (one write per register every 30 s) and read back from the inverter."
       }
     }
   }

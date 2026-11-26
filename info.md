@@ -9,7 +9,7 @@ Local Home Assistant integration for **Deye single-phase hybrid inverters** (SG0
 - 100% local polling — nothing leaves your network.
 - Sensors: PV strings, battery (SOC/power/temperature), grid import/export, per-phase grid/inverter/load, temperatures, plus daily and lifetime energy counters for the Energy dashboard.
 - Guided config flow (pick model → host/port/unit ID/scan interval) and an options flow for transport, address offset and serial params.
-- **Read-only operation** - This fork is intended for monitoring only, if you have an interest in that please refer to the original project: https://github.com/Developer089/deye-modbus-ha 
+- **Read-only by default** - optional, guarded writes (battery limits, grid charge, work mode, time of use) for the single-phase SG05LP1, enabled in the integration options.
 
 Some entities (PV3/PV4, per-phase detail, TOU slots) ship **disabled by default** — enable them in the entity settings.
 

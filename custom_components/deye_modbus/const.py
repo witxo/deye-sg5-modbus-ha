@@ -16,6 +16,7 @@ CONF_BYTESIZE: Final = "bytesize"
 CONF_PARITY: Final = "parity"
 CONF_STOPBITS: Final = "stopbits"
 CONF_ADDR_OFFSET: Final = "address_offset"
+CONF_ALLOW_WRITES: Final = "allow_writes"
 
 # --- Defaults ---
 # Deye WiFi/LAN loggers expose Modbus TCP on 8899 by default. Third-party
@@ -27,6 +28,7 @@ MIN_SCAN_SECONDS: Final = 10
 MAX_SCAN_SECONDS: Final = 300
 DEFAULT_TRANSPORT: Final = "tcp"
 DEFAULT_ADDR_OFFSET: Final = 0
+DEFAULT_ALLOW_WRITES: Final = False
 
 # Serial params (only used when transport == "rtutcp")
 DEFAULT_BAUDRATE: Final = 9600
