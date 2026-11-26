@@ -143,6 +143,10 @@ When enabled, these entities appear (entity category *Configuration*):
 | Battery Shutdown / Restart / Low SOC | number | 217 / 218 / 219 | must keep shutdown < low < restart |
 | Grid Charge | switch | 232 | on / off |
 | Grid Charge Current | number | 230 | 0–135 A |
+| GEN Port Mode (**entity disabled by default**) | select | 235 | Generator Input / Smart Load Output / Micro Inverter Input |
+| GEN Charge | switch | 231 | on / off |
+| GEN Charge Start Voltage / SOC, GEN Charge Current | number | 225 / 226 / 227 | 40–60 V, 0–100 %, 0–135 A |
+| GEN Off / On Battery Voltage and SOC | number | 236 / 237 / 238 / 239 | 40–60 V, 0–100 % (smart load off/on, or micro-inverter cut-off/restart) |
 | Energy Pattern | select | 243 | Battery First / Load First |
 | Work Mode | select | 244 | Selling First / Zero Export To Load / Zero Export To CT |
 | Max Sell Power | number | 245 | 0–6000 W |
@@ -153,7 +157,9 @@ When enabled, these entities appear (entity category *Configuration*):
 | TOU 1–6 SOC | number | 268–273 | 5–100 % |
 | TOU 1–6 Grid Charge | switch | 274–279 bit 0 | other bits untouched |
 
-Deliberately **not** exposed: GEN port mode and settings (235–239, e.g. an AC-coupled inverter on the GEN input), battery type and voltages, grid/country parameters and inverter on/off.
+GEN Port Mode is created disabled: enable the entity yourself if you need it. With an AC-coupled inverter on the GEN input, switching away from *Micro Inverter Input* stops that inverter's power from being used.
+
+Deliberately **not** exposed: battery type and voltages, grid/country parameters and inverter on/off.
 
 Safety checks, all enforced in the coordinator so no entity or automation can skip them:
 

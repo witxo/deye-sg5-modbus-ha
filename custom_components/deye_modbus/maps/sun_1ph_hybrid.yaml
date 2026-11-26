@@ -348,8 +348,12 @@ sensors:
 # block and matching it against the inverter's own settings
 # (e.g. 204 = 314 Ah, 235 = 2 micro-inverter on GEN, 244 = 2 zero export to CT).
 #
-# Deliberately NOT exposed: GEN port mode (235) and its settings, battery type
-# and voltages, grid/country parameters, inverter on/off.
+# GEN port controls (225-239) were added on request. GEN Port Mode is disabled
+# by default: changing it with an AC-coupled inverter on the GEN input stops
+# that inverter's power from being used.
+#
+# Deliberately NOT exposed: battery type and voltages, grid/country
+# parameters, inverter on/off.
 # =====================================================================
 controls:
 
@@ -423,6 +427,102 @@ controls:
     step: 1
     unit_of_measurement: A
     icon: mdi:current-dc
+
+  # ------------------------------------------------------------- GEN port
+  # 235: what is connected to the GEN terminals.
+  - type: select
+    name: GEN Port Mode
+    unique_id: gen_port_mode
+    address: 235
+    icon: mdi:engine
+    enabled_default: false
+    options:
+      - label: Generator Input
+        value: 0
+      - label: Smart Load Output
+        value: 1
+      - label: Micro Inverter Input
+        value: 2
+
+  - type: switch
+    name: GEN Charge
+    unique_id: gen_charge_enable
+    address: 231
+    on_value: 1
+    off_value: 0
+    icon: mdi:engine
+
+  - type: number
+    name: GEN Charge Start Voltage
+    unique_id: gen_charge_start_voltage
+    address: 225
+    min: 40
+    max: 60
+    step: 0.1
+    write_factor: 100
+    unit_of_measurement: V
+    icon: mdi:flash-triangle-outline
+
+  - type: number
+    name: GEN Charge Start SOC
+    unique_id: gen_charge_start_soc
+    address: 226
+    min: 0
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-charging-outline
+
+  - type: number
+    name: GEN Charge Current
+    unique_id: gen_charge_current
+    address: 227
+    min: 0
+    max: 135
+    unit_of_measurement: A
+    icon: mdi:current-dc
+
+  # 236-239: battery thresholds for the GEN port. In Smart Load mode they switch
+  # the load off/on; in Micro Inverter mode they cut the micro-inverter off when
+  # the battery is full (OFF) and let it back on (ON).
+  - type: number
+    name: GEN Off Battery Voltage
+    unique_id: gen_off_voltage
+    address: 236
+    min: 40
+    max: 60
+    step: 0.1
+    write_factor: 100
+    unit_of_measurement: V
+    icon: mdi:flash-off-outline
+
+  - type: number
+    name: GEN Off Battery SOC
+    unique_id: gen_off_soc
+    address: 237
+    min: 0
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-off-outline
+
+  - type: number
+    name: GEN On Battery Voltage
+    unique_id: gen_on_voltage
+    address: 238
+    min: 40
+    max: 60
+    step: 0.1
+    write_factor: 100
+    unit_of_measurement: V
+    icon: mdi:flash-outline
+
+  - type: number
+    name: GEN On Battery SOC
+    unique_id: gen_on_soc
+    address: 239
+    min: 0
+    max: 100
+    unit_of_measurement: '%'
+    icon: mdi:battery-sync-outline
 
   # ------------------------------------------------------------- work mode
   - type: select
